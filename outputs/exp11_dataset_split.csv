@@ -1,0 +1,5 @@
+﻿dataset,ratio,raw_records
+Training,70%,2100
+Validation,20%,600
+Test,10%,300
+Paper evaluation,resampled test workload,3000

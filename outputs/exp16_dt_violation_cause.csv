@@ -1,0 +1,7 @@
+cause,count,percent
+deadline_miss_total,460,15.333333333333332
+dtt_below_gamma_total,13,0.4333333333333333
+deadline_miss_and_dtt_below_gamma,13,0.4333333333333333
+deadline_miss_but_dtt_not_below_gamma,447,14.899999999999999
+pre_dtt_safe_but_post_constraint_violation,452,15.066666666666666
+high_priority_deadline_miss,0,0.0

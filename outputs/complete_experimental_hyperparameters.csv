@@ -1,0 +1,53 @@
+category,parameter,setting
+Topology and resources,Number of terminal devices,5
+Topology and resources,Number of edge nodes,3
+Topology and resources,Number of cloud centers,1
+Topology and resources,Terminal-edge uplink bandwidth B_t_e,"U(10,100) Mbps"
+Topology and resources,Edge-cloud bandwidth B_e_c,"U(10,100) Mbps"
+Topology and resources,Terminal-edge link latency,"U(1,10) ms"
+Topology and resources,Edge-edge link latency,"U(5,20) ms"
+Topology and resources,Edge-cloud link latency,"U(50,100) ms"
+Topology and resources,Edge-node hourly energy limit,"80 kJ/h; P=5.5+15.0u W"
+Topology and resources,Terminal CPU cores / memory quota,"{1,2,4,8} cores / {256,512,1024,2048} MB"
+Task workload,Number of evaluation tasks,3000
+Task workload,Task types,"Denoising 49.6%; signal enhancement 50.4%"
+Task workload,Data size d_i,"mean 1.63 MB; range [0.07,5.90] MB"
+Task workload,Computation demand c_i,"c_i=rho_i*d_i; real density min-max normalized"
+Task workload,Deadline tau_i,"clip(10+30(1-u_hat_i)-15p_i+4s_hat_i,8,45) ms"
+Task workload,Priority distribution,"high 4.4%; medium 5.7%; low 89.9%; high priority iff p_i>=0.8"
+Task workload,DAG structure,"279/3000 tasks have >=1 predecessor; cycle detection/removal"
+Task workload,Train/validation/test split,"70/20/10; random seed 42"
+Execution model,Terminal frequency f_t,0.8 GHz
+Execution model,Edge frequency f_e,5.0 GHz
+Execution model,Cloud frequency f_c,20.0 GHz
+Execution model,Terminal energy coefficients alpha_t beta_t,"0.028,0.014; base 0.055 kJ"
+Execution model,Edge energy coefficients alpha_e beta_e,"0.017,0.008; base 0.026 kJ"
+Execution model,Cloud energy coefficients alpha_c beta_c,"0.022,0.016; base 0.038 kJ"
+Execution model,Terminal transmit power P_t_tx,approximately 10 W
+Execution model,Edge transmit power P_e_tx,approximately 5 W
+Execution model,Delay/energy clipping,"[3,120] ms / [0.008,0.20] kJ"
+Execution model,Queue monitoring window Delta,1 scheduling interval
+Execution model,Queue utilization cap rho_max,0.95
+Execution model,Failure probability,"0.05+0.15(1-p_i); retry max(0.001,0.08*p_fail)"
+Execution model,Priority-aware QoS,"edge: >=4 cores, >=2048 MB, B_t_e>=80 Mbps"
+Reward and trust,Reward weights omega_1...omega_5,"0.25,0.15,0.25,0.20,0.15"
+Reward and trust,Reference scales,"T_ref=100 ms; E_ref=0.10 kJ"
+Reward and trust,Reward clipping,"[-5,+5]"
+Reward and trust,Reliability weights lambda_1 lambda_2,"0.5,0.5"
+Reward and trust,Timeliness constant epsilon,1e-3
+Reward and trust,Prediction residual smoothing zeta,0.9
+Reward and trust,Trust threshold Gamma,0.80
+Fuzzy priority module,Membership functions,"Gaussian centers {0.25,0.50,0.75}; sigma=0.15"
+Fuzzy priority module,Rule priorities,"terminal 4-7; edge 3-6; cloud 1.5-2; u_hat>0.65 or p>0.75 favors edge"
+DQN agent,Learning rate alpha,1e-3
+DQN agent,Discount factor gamma,0.95
+DQN agent,Exploration epsilon-greedy,"epsilon_0=1.0; epsilon_min=0.01; decay=0.995"
+DQN agent,Batch size,64
+DQN agent,Replay buffer,"10000 samples; TD-error-prioritized; replay every 5 steps"
+DQN agent,Network,"MLP 15 -> 64 -> 64 -> 3; ReLU; MSE"
+DQN agent,Target network,hard copy at end of each training episode
+DQN agent,Optimizer,Adam
+Federated learning,Edge agents,3
+Federated learning,Federated rounds,20
+Federated learning,Local epochs per round,2
+Federated learning,Aggregation,"FedAvg equal weights; validation every 5 rounds; only model parameters exchanged"

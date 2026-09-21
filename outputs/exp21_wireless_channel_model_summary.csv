@@ -1,0 +1,6 @@
+distance_m,normal_rate_mbps,degraded_effective_rate_mbps,snr_degradation_db,retransmission_factor
+20,100.0,60.0,8.0,1.7
+50,100.0,60.0,8.0,1.7
+100,100.0,60.0,8.0,1.7
+200,100.0,60.0,8.0,1.7
+300,100.0,60.0,8.0,1.7

@@ -1,0 +1,6 @@
+metric,value,description
+rule_consistency_rate,98.1,Agreement between the fuzzy-prior output and the deterministic reference-action heuristic; not supervised classification accuracy.
+matched_samples,2943.0,Number of tasks where the fuzzy-prior action agrees with the reference heuristic.
+total_samples,3000.0,Number of evaluated task instances.
+high_priority_rule_consistency_rate,100.0,Agreement rate restricted to high-priority tasks.
+high_priority_samples,131.0,Number of high-priority task instances.

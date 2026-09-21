@@ -1,0 +1,5 @@
+dependent_task_ratio_percent,dependent_task_count,avg_latency_ms,avg_energy_kj,high_priority_completion_percent,avg_dtt_score,trust_violation_percent
+2.0,60,21.04,0.031,100.0,0.853,15.37
+10.0,300,21.44,0.031,100.0,0.852,15.5
+30.0,900,22.53,0.031,100.0,0.848,15.5
+50.0,1500,23.79,0.0311,100.0,0.845,15.7

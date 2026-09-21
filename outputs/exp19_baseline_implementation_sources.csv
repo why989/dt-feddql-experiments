@@ -1,0 +1,10 @@
+Algorithm,Implementation_type,Description
+Local Only,Deterministic baseline,All tasks are executed on the source terminal.
+Random Offloading,Stochastic baseline,Randomly selects one feasible execution layer.
+Greedy,Self-implemented heuristic,"Uses latency urgency, workload size, and resource availability."
+MILP-inspired,Optimization-inspired baseline,Uses deterministic assignment under the same objective components; no exact MILP optimality gap is claimed.
+Centralized DQN,Self-implemented learning baseline,Single DQN policy with centralized state observation.
+Fuzzy DQL,Self-implemented fuzzy-guided DQL baseline,Adds fuzzy-prior guidance but no federated aggregation or DT re-orchestration.
+FedServ,Literature-inspired federated service baseline,Federated service-offloading style policy under the same simulator.
+FedDQL-Federated,Proposed-family ablation,Federated DQL without DT trustworthy re-orchestration.
+DT-FedDQL,Proposed method,Fuzzy prior + FedDQL + DT trustworthy orchestration.

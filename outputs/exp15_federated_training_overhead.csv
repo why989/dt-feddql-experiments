@@ -1,0 +1,8 @@
+metric,value
+federated_rounds,20
+local_epochs_per_round,2
+validation_interval_rounds,5
+convergence_epoch_recorded,40
+parameter_upload_download_mb,2.4619999999999997
+raw_training_backhaul_mb,3438.422
+training_wall_clock_s,not_recorded_in_previous_run
