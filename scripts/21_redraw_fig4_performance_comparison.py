@@ -7,9 +7,7 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = PROJECT_ROOT / "results"
-PAPER_DIR = Path(
-    r"D:\研究生资料\基于联邦深度Q学习的微动勘探数据处理任务卸载系统设计\paiban\paiban"
-)
+FIGURES_DIR = PROJECT_ROOT / "figures"
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "publication_quality_figures"
 
 
@@ -169,12 +167,12 @@ def main() -> None:
     ax.legend(loc="upper right", frameon=True, framealpha=0.92, ncol=1, borderpad=0.35)
     soften_axis(ax)
 
-    for out_dir in (PAPER_DIR, OUTPUT_DIR):
+    for out_dir in (FIGURES_DIR, OUTPUT_DIR):
         out_dir.mkdir(parents=True, exist_ok=True)
         fig.savefig(out_dir / "delay_constraint_energy.png", bbox_inches="tight", pad_inches=0.03)
         fig.savefig(out_dir / "delay_constraint_energy.pdf", bbox_inches="tight", pad_inches=0.03)
 
-    print(PAPER_DIR / "delay_constraint_energy.png")
+    print(FIGURES_DIR / "delay_constraint_energy.png")
 
 
 if __name__ == "__main__":

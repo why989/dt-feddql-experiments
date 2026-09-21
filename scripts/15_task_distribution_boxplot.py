@@ -6,9 +6,7 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = PROJECT_ROOT / "results"
-PAPER_DIR = Path(
-    r"D:\研究生资料\基于联邦深度Q学习的微动勘探数据处理任务卸载系统设计\paiban\paiban"
-)
+FIGURES_DIR = PROJECT_ROOT / "figures"
 
 
 def setup_style() -> None:
@@ -108,12 +106,12 @@ def main() -> None:
 
     fig.tight_layout(pad=0.5, h_pad=0.75)
 
-    for directory in [PROJECT_ROOT / "outputs" / "publication_quality_figures", PAPER_DIR]:
+    for directory in [PROJECT_ROOT / "outputs" / "publication_quality_figures", FIGURES_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
         fig.savefig(directory / "task_distribution_boxplot.png", bbox_inches="tight", pad_inches=0.02)
         fig.savefig(directory / "task_distribution_boxplot.pdf", bbox_inches="tight", pad_inches=0.02)
 
-    print(PAPER_DIR / "task_distribution_boxplot.png")
+    print(FIGURES_DIR / "task_distribution_boxplot.png")
 
 
 if __name__ == "__main__":
