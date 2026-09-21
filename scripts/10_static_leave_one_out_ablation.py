@@ -199,11 +199,28 @@ def _run_variant(tasks: pd.DataFrame, name: str, flags: dict[str, bool], seed: i
         trust_threshold=0.80,
     )
     metrics = calculate_metrics(records)
+    high = records[records["high_priority"] == 1]
+    high_total = int(len(high))
+    if high_total > 0:
+        hpc_count = int((high["deadline_met"] == 1).sum())
+        thgr_count = int(((high["deadline_met"] == 1) & (high["trust_violation"] == 0)).sum())
+        thgr_rate = round(thgr_count / high_total * 100.0, 4)
+    else:
+        hpc_count = 0
+        thgr_count = 0
+        thgr_rate = 100.0
     return {
         "variant": name,
         "avg_delay_ms": metrics["avg_delay_ms"],
         "avg_energy_kj_per_task": metrics["avg_energy_kj"],
         "hpc_rate_percent": metrics["high_priority_completion_rate"],
+        "hpc_count": f"{hpc_count}/{high_total}",
+        "thgr_rate_percent": thgr_rate,
+        "thgr_count": f"{thgr_count}/{high_total}",
+        "trusted_hpc_score_percent": round(
+            metrics["high_priority_completion_rate"] * (1.0 - metrics["trust_violation_rate"] / 100.0),
+            4,
+        ),
         "avg_dtt_score": metrics["avg_dtt_score"],
         "trust_violation_rate_percent": metrics["trust_violation_rate"],
         "edge_cpu_utilization_percent": metrics["edge_cpu_utilization"],
@@ -246,6 +263,8 @@ def main() -> None:
             "avg_delay_ms",
             "avg_energy_kj_per_task",
             "hpc_rate_percent",
+            "hpc_count",
+            "trusted_hpc_score_percent",
             "avg_dtt_score",
             "trust_violation_rate_percent",
         ]

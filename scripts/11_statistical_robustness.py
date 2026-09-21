@@ -105,6 +105,9 @@ def _run_algorithm(tasks: pd.DataFrame, algorithm: str, seed: int, bandwidth_sim
         trust_threshold=0.80,
     )
     metrics = calculate_metrics(records)
+    high = records[records["high_priority"] == 1]
+    high_total = int(len(high))
+    hpc_success = int((high["deadline_met"] == 1).sum()) if high_total else 0
     return {
         "seed": seed,
         "algorithm": algorithm,
@@ -112,6 +115,8 @@ def _run_algorithm(tasks: pd.DataFrame, algorithm: str, seed: int, bandwidth_sim
         "avg_delay_ms": metrics["avg_delay_ms"],
         "avg_energy_kj": metrics["avg_energy_kj"],
         "high_priority_completion_rate": metrics["high_priority_completion_rate"],
+        "hpc_success_count": hpc_success,
+        "high_priority_count": high_total,
         "avg_dtt_score": metrics["avg_dtt_score"],
         "trust_violation_rate": metrics["trust_violation_rate"],
         "edge_cpu_bw_utilization": metrics["edge_cpu_bw_utilization"],
@@ -196,7 +201,39 @@ def _significance_tests(raw: pd.DataFrame, target: str = "DT-FedDQL") -> pd.Data
     return pd.DataFrame(rows)
 
 
-def _run_multiseed_statistics() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def _wilson_interval(success: int, total: int, z: float = 1.959963984540054) -> tuple[float, float]:
+    if total <= 0:
+        return float("nan"), float("nan")
+    phat = success / total
+    denom = 1 + z * z / total
+    center = (phat + z * z / (2 * total)) / denom
+    half = z * ((phat * (1 - phat) + z * z / (4 * total)) / total) ** 0.5 / denom
+    return max(0.0, center - half) * 100.0, min(1.0, center + half) * 100.0
+
+
+def _pooled_hpc_summary(raw: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    for algorithm, group in raw.groupby("algorithm", sort=False):
+        success = int(group["hpc_success_count"].sum())
+        total = int(group["high_priority_count"].sum())
+        lower, upper = _wilson_interval(success, total)
+        per_seed = group["high_priority_completion_rate"].astype(float)
+        rows.append(
+            {
+                "algorithm": algorithm,
+                "hpc_success_count": success,
+                "high_priority_count": total,
+                "pooled_hpc_percent": round(success / total * 100.0, 4) if total else np.nan,
+                "wilson95_low_percent": round(lower, 4),
+                "wilson95_high_percent": round(upper, 4),
+                "per_seed_min_percent": round(float(per_seed.min()), 4),
+                "per_seed_max_percent": round(float(per_seed.max()), 4),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _run_multiseed_statistics() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     raw_tasks = load_task_set("real")
     seeds = [1, 7, 21, 42, 84]
     algorithms = [
@@ -219,7 +256,8 @@ def _run_multiseed_statistics() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFram
     raw = pd.DataFrame(rows)
     summary = _format_mean_std(raw)
     sig = _significance_tests(raw)
-    return raw, summary, sig
+    pooled_hpc = _pooled_hpc_summary(raw)
+    return raw, summary, sig, pooled_hpc
 
 
 def _run_scalability_scan() -> pd.DataFrame:
@@ -270,13 +308,14 @@ def _write_dataset_split_table() -> pd.DataFrame:
 def main() -> None:
     print_header("Experiment 11 - Statistical robustness and scalability")
 
-    raw, summary, sig = _run_multiseed_statistics()
+    raw, summary, sig, pooled_hpc = _run_multiseed_statistics()
     scalability = _run_scalability_scan()
     split_table = _write_dataset_split_table()
 
     raw_path = save_table(raw, "exp11_multiseed_raw_metrics.csv")
     summary_path = save_table(summary, "exp11_multiseed_mean_std.csv")
     sig_path = save_table(sig, "exp11_paired_significance_tests.csv")
+    pooled_hpc_path = save_table(pooled_hpc, "exp11_pooled_hpc_counts.csv")
     scale_path = save_table(scalability, "exp11_scalability_scan.csv")
     split_path = save_table(split_table, "exp11_dataset_split.csv")
 
@@ -291,6 +330,9 @@ def main() -> None:
         "## Paired significance tests",
         markdown_table(sig),
         "",
+        "## Pooled high-priority completion counts",
+        markdown_table(pooled_hpc),
+        "",
         "## Dataset split",
         markdown_table(split_table),
         "",
@@ -303,11 +345,14 @@ def main() -> None:
     print(summary.to_string(index=False))
     print("\nSignificance tests:")
     print(sig.to_string(index=False))
+    print("\nPooled high-priority completion counts:")
+    print(pooled_hpc.to_string(index=False))
     print("\nScalability scan:")
     print(scalability.to_string(index=False))
     print(f"\nSaved raw metrics: {raw_path}")
     print(f"Saved summary: {summary_path}")
     print(f"Saved significance tests: {sig_path}")
+    print(f"Saved pooled HPC counts: {pooled_hpc_path}")
     print(f"Saved scalability scan: {scale_path}")
     print(f"Saved dataset split: {split_path}")
     print(f"Saved notes: {note_path}")
