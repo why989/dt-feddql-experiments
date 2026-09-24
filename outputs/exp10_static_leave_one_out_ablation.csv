@@ -1,6 +1,6 @@
-﻿variant,avg_delay_ms,avg_energy_kj_per_task,hpc_rate_percent,avg_dtt_score,trust_violation_rate_percent,edge_cpu_utilization_percent,edge_bandwidth_utilization_percent,reorchestration_rate_percent,delay_increase_vs_full_ms,energy_increase_vs_full_kj,hpc_drop_vs_full_pp,dtt_drop_vs_full
-Full static policy,20.9464,0.030977,99.2366,0.8532,15.3667,74.4316,76.3239,0.0,0.0,0.0,0.0,0.0
-w/o Fuzzy prior,42.4261,0.056697,83.2061,0.7073,91.3333,74.4986,77.958,0.0,21.4797,0.02572,16.0305,0.1459
-w/o Resource state,21.6587,0.032706,91.6031,0.8507,15.8333,74.2582,76.2151,0.0,0.7123,0.001729,7.6335,0.0025
-w/o Reward shaping,21.5526,0.031805,87.7863,0.8511,15.8667,74.2582,76.2151,0.0,0.6062,0.000828,11.4503,0.0021
-w/o FedDQL policy,43.1172,0.057207,100.0,0.698,95.0333,77.8138,78.3668,0.0,22.1708,0.02623,-0.7634,0.1552
+variant,avg_delay_ms,avg_energy_kj_per_task,hpc_rate_percent,hpc_count,thgr_rate_percent,thgr_count,trusted_hpc_score_percent,avg_dtt_score,trust_violation_rate_percent,edge_cpu_utilization_percent,edge_bandwidth_utilization_percent,reorchestration_rate_percent,delay_increase_vs_full_ms,energy_increase_vs_full_kj,hpc_drop_vs_full_pp,dtt_drop_vs_full
+Full static policy,20.9464,0.030977,99.2366,130/131,99.2366,130/131,83.9872,0.8532,15.3667,74.4316,76.3239,0.0,0.0,0.0,0.0,0.0
+w/o Fuzzy prior,42.4261,0.056697,83.2061,109/131,83.2061,109/131,7.2112,0.7073,91.3333,74.4986,77.958,0.0,21.4797,0.02572,16.0305,0.1459
+w/o Resource state,21.6587,0.032706,91.6031,120/131,91.6031,120/131,77.0993,0.8507,15.8333,74.2582,76.2151,0.0,0.7123,0.001729,7.6335,0.0025
+w/o Reward shaping,21.5526,0.031805,87.7863,115/131,87.7863,115/131,73.8575,0.8511,15.8667,74.2582,76.2151,0.0,0.6062,0.000828,11.4503,0.0021
+w/o FedDQL policy,43.1172,0.057207,100.0,131/131,100.0,131/131,4.9667,0.698,95.0333,77.8138,78.3668,0.0,22.1708,0.02623,-0.7634,0.1552
