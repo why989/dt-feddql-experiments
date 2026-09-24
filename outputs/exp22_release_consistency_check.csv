@@ -1,0 +1,9 @@
+check,released_value,recomputed_value,match
+released avg_delay_ms,30.4196,30.4196,True
+released avg_energy_kj,0.032341,0.032341,True
+released high_priority_completion_rate,100.0,100.0,True
+released avg_dtt_score,0.8472,0.8472,True
+released trust_violation_rate,20.0333,20.0333,True
+per-task delay identical to all-strongest-edge policy,,18.338615455210682,False
+trust decisions identical to all-strongest-edge policy,,1538.0,False
+"corr(Q(e2)-Q(e1), rho(e1)-rho(e2))",,0.333802671533135,True

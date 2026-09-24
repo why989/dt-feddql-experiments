@@ -1,0 +1,13 @@
+﻿algorithm,action,percentage
+DT-FedDQL,Terminal,0.0
+DT-FedDQL,Edge,0.0
+DT-FedDQL,Cloud,0.0
+FedDQL-Federated,Terminal,1.7999999999999998
+FedDQL-Federated,Edge,0.0
+FedDQL-Federated,Cloud,0.0
+Greedy,Terminal,58.86666666666667
+Greedy,Edge,0.0
+Greedy,Cloud,3.3333333333333335
+Random,Terminal,20.666666666666668
+Random,Edge,0.0
+Random,Cloud,20.3

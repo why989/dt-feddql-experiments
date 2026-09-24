@@ -1,0 +1,9 @@
+﻿figure,paper_use,data_source
+fig01_training_convergence,Original experiment: training convergence,training_logs.csv
+fig02_latency_energy_comparison,Original experiment: latency and energy comparison,algorithm_metrics_comparison.csv
+fig03_qos_and_trust_comparison,Combined table-style figure: QoS and trustworthiness metrics,algorithm_metrics_comparison.csv
+fig04_fuzzy_confusion_matrix,Original experiment: fuzzy rule-consistency evaluation,dt_feddql_result.csv
+fig05_dynamic_trustworthiness_r1_r5,Added experiment: dynamic trustworthiness,dynamic_trust_experiment.csv
+fig06_dt_ablation_study,Added experiment: DT vs No-DT ablation,dynamic_trust_ablation_comparison.csv
+fig07_terminal_edge_cloud_node_status,Added experiment: terminal-edge-cloud node status,api_service node builder / node_status_snapshot.csv
+fig08_offloading_action_distribution,Original experiment supplement: offloading decisions,algorithm result CSV files

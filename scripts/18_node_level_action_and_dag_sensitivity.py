@@ -1,52 +1,59 @@
+"""Node-level action distribution and DAG-width sensitivity.
+
+Two different jobs:
+
+1. ``exp18_node_level_action_distribution.csv`` reports the **actual** node-level
+   routing of the released DT-FedDQL trace (``results/dt_feddql_result.csv``).
+   The released action space is already node-level
+   (``A = {L, e1, e2, e3, C}``), so the per-node histogram is a direct count of
+   the recorded ``action`` labels -- no post-hoc rebalancing is applied.
+2. ``exp18_dag_width_sensitivity.csv`` is **re-computed from scratch**: the
+   dependency structure of the released task trace is rebuilt as a layered DAG
+   with a controlled branch width and the released DT-FedDQL policy is re-run
+   on the re-wired tasks.  No value in that table is transcribed or
+   interpolated.
+"""
+
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+
+import dag_utils as du  # noqa: E402
+
 RESULT_PATH = ROOT / "results" / "dt_feddql_result.csv"
 OUT_DIR = ROOT / "outputs"
 
+WIDTHS = (1, 3, 5)
+BASE_DEPENDENT_RATIO = 0.093
+SEEDS = (42, 43, 44, 45, 46)
 
-def assign_edge_nodes(edge_tasks: pd.DataFrame) -> pd.Series:
-    """Decode layer-level edge decisions into heterogeneous edge nodes.
-
-    The paper-level final action is node-level. For the existing result trace,
-    edge-layer selections are decoded by a lightweight load-normalized selector
-    over three heterogeneous edge nodes. This preserves the original execution
-    trace while exposing the concrete edge-node assignment used for monitoring
-    and node-level analysis.
-    """
-
-    capacities = {
-        "edge-1": 1.00,
-        "edge-2": 0.95,
-        "edge-3": 0.80,
-    }
-    loads = {name: 0.0 for name in capacities}
-    assigned: list[str] = []
-
-    for _, row in edge_tasks.iterrows():
-        demand = 0.55 * float(row.get("exec_cpu_util", 0.75)) + 0.45 * float(row.get("bandwidth_utilization", 0.75))
-        selected = min(capacities, key=lambda n: loads[n] / capacities[n])
-        assigned.append(selected)
-        loads[selected] += demand
-
-    return pd.Series(assigned, index=edge_tasks.index, name="execution_node")
+NODE_LABEL_MAP = {
+    "terminal": "terminal-local",
+    "edge_1": "edge-1",
+    "edge_2": "edge-2",
+    "edge_3": "edge-3",
+    "cloud": "cloud",
+}
 
 
 def build_node_distribution(df: pd.DataFrame) -> pd.DataFrame:
-    node = pd.Series("terminal-local", index=df.index, name="execution_node")
+    """Count the released node-level actions per execution node."""
 
-    edge_mask = df["action"].astype(str).str.contains("edge", case=False, na=False)
-    cloud_mask = df["action"].astype(str).str.contains("cloud", case=False, na=False)
-
-    node.loc[edge_mask] = assign_edge_nodes(df.loc[edge_mask])
-    node.loc[cloud_mask] = "cloud"
-
+    node = (
+        df["action"]
+        .astype(str)
+        .str.lower()
+        .map(NODE_LABEL_MAP)
+        .fillna(df["action"].astype(str))
+    )
     work = df.copy()
     work["execution_node"] = node
 
@@ -81,46 +88,70 @@ def build_node_distribution(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def build_dag_width_scan() -> pd.DataFrame:
-    """Construct a reproducible DAG-width sensitivity table.
+def _run_once(tasks: pd.DataFrame, model, seed: int) -> dict:
+    records, metrics = du.evaluate_policy(tasks, model, seed=seed)
+    high = records[records["high_priority"] == 1]
+    return {
+        "avg_delay_ms": metrics["avg_delay_ms"],
+        "avg_energy_kj": metrics["avg_energy_kj"],
+        "high_priority_completion_rate": metrics["high_priority_completion_rate"],
+        "avg_dtt_score": metrics["avg_dtt_score"],
+        "trust_violation_rate": metrics["trust_violation_rate"],
+        "high_priority_latency_ms": round(float(high["exec_delay_ms"].mean()), 4) if len(high) else np.nan,
+        "tasks_with_unmet_predecessor": int((records["dependency_met"] == 0).sum()),
+    }
 
-    The width scenarios keep the same base workload size and increase the
-    number of parallel branches in the synthetic dependency generator. The
-    values are calibrated from the existing DAG-depth scan and the monitored
-    dependency-aware execution penalty.
+
+def build_dag_width_scan(model, base_trace: pd.DataFrame) -> pd.DataFrame:
+    """Re-run the DT-FedDQL policy on re-wired DAGs of increasing branch width.
+
+    The dependent-task ratio is held at the level of the released workload so
+    that only the branch width changes.  Each width is evaluated over
+    ``SEEDS`` independent simulator seeds.
     """
 
-    return pd.DataFrame(
-        [
-            {
-                "scan_type": "dag_width",
-                "scale_value": 1,
-                "avg_delay_ms": 20.92,
-                "avg_energy_kj": 0.0310,
-                "high_priority_completion_rate": 100.00,
-                "avg_dtt_score": 0.8531,
-                "trust_violation_rate": 15.1,
-            },
-            {
-                "scan_type": "dag_width",
-                "scale_value": 3,
-                "avg_delay_ms": 21.31,
-                "avg_energy_kj": 0.0313,
-                "high_priority_completion_rate": 99.92,
-                "avg_dtt_score": 0.8526,
-                "trust_violation_rate": 15.8,
-            },
-            {
-                "scan_type": "dag_width",
-                "scale_value": 5,
-                "avg_delay_ms": 21.74,
-                "avg_energy_kj": 0.0317,
-                "high_priority_completion_rate": 99.77,
-                "avg_dtt_score": 0.8521,
-                "trust_violation_rate": 16.4,
-            },
-        ]
-    )
+    rows = []
+    for width in WIDTHS:
+        rewired = du.rewire_dependencies(base_trace, BASE_DEPENDENT_RATIO, width)
+        stats = du.graph_statistics(rewired)
+
+        runs = [_run_once(rewired, model, seed) for seed in SEEDS]
+        frame = pd.DataFrame(runs)
+
+        row = {
+            "scan_type": "dag_width",
+            "scale_value": width,
+            "dependent_task_ratio_percent": stats["dependent_task_ratio_percent"],
+            "dependent_task_count": stats["dependent_task_count"],
+            "mean_predecessors_per_dependent_task": stats["mean_predecessors"],
+            "max_predecessors": stats["max_predecessors"],
+            "seeds": len(SEEDS),
+        }
+        for column in frame.columns:
+            row[column] = round(float(frame[column].mean()), 4)
+            row[f"{column}_std"] = round(float(frame[column].std(ddof=1)), 4)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def build_baseline_row(model, base_trace: pd.DataFrame) -> dict:
+    """Released dependency graph, kept as the reference point of the scan."""
+
+    stats = du.graph_statistics(base_trace)
+    frame = pd.DataFrame([_run_once(base_trace, model, seed) for seed in SEEDS])
+    row = {
+        "scan_type": "released_graph",
+        "scale_value": stats["max_predecessors"],
+        "dependent_task_ratio_percent": stats["dependent_task_ratio_percent"],
+        "dependent_task_count": stats["dependent_task_count"],
+        "mean_predecessors_per_dependent_task": stats["mean_predecessors"],
+        "max_predecessors": stats["max_predecessors"],
+        "seeds": len(SEEDS),
+    }
+    for column in frame.columns:
+        row[column] = round(float(frame[column].mean()), 4)
+        row[f"{column}_std"] = round(float(frame[column].std(ddof=1)), 4)
+    return row
 
 
 def main() -> None:
@@ -128,14 +159,20 @@ def main() -> None:
     df = pd.read_csv(RESULT_PATH)
 
     node_distribution = build_node_distribution(df)
-    width_scan = build_dag_width_scan()
-
     node_path = OUT_DIR / "exp18_node_level_action_distribution.csv"
-    width_path = OUT_DIR / "exp18_dag_width_sensitivity.csv"
     node_distribution.to_csv(node_path, index=False)
+
+    model = du.load_trained_model()
+    base_trace = du.load_base_trace()
+    width_scan = pd.DataFrame(
+        [build_baseline_row(model, base_trace)]
+        + build_dag_width_scan(model, base_trace).to_dict("records")
+    )
+    width_path = OUT_DIR / "exp18_dag_width_sensitivity.csv"
     width_scan.to_csv(width_path, index=False)
 
     print(node_distribution.to_string(index=False))
+    print()
     print(width_scan.to_string(index=False))
     print(f"Saved: {node_path}")
     print(f"Saved: {width_path}")
@@ -143,4 +180,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

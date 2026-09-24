@@ -1,5 +1,6 @@
-dependent_task_ratio_percent,dependent_task_count,avg_latency_ms,avg_energy_kj,high_priority_completion_percent,avg_dtt_score,trust_violation_percent
-2.0,60,21.04,0.031,100.0,0.853,15.37
-10.0,300,21.44,0.031,100.0,0.852,15.5
-30.0,900,22.53,0.031,100.0,0.848,15.5
-50.0,1500,23.79,0.0311,100.0,0.845,15.7
+scan_type,target_ratio_percent,dependent_task_ratio_percent,dependent_task_count,seeds,avg_latency_ms,avg_latency_ms_std,avg_energy_kj,avg_energy_kj_std,high_priority_completion_percent,high_priority_completion_percent_std,avg_dtt_score,avg_dtt_score_std,trust_violation_percent,trust_violation_percent_std,high_priority_latency_ms,high_priority_latency_ms_std,tasks_with_unmet_predecessor,tasks_with_unmet_predecessor_std
+released_graph,,9.3,279,5,30.5501,0.1259,0.0323,0.0,100.0,0.0,0.8456,0.0012,24.68,1.1746,12.9146,0.1531,73.6,42.306
+dependency_ratio,2.0,2.0,60,5,30.4456,0.0626,0.0323,0.0,100.0,0.0,0.8465,0.0002,23.94,0.6857,12.7027,0.1213,34.6,6.4265
+dependency_ratio,10.0,10.0,300,5,30.8224,0.0698,0.0323,0.0,100.0,0.0,0.843,0.0005,26.7267,0.3883,12.9891,0.1745,177.0,12.0208
+dependency_ratio,30.0,30.0,900,5,31.7143,0.0988,0.0324,0.0,100.0,0.0,0.8339,0.0009,33.1467,0.7124,13.6,0.115,515.4,19.0604
+dependency_ratio,50.0,50.0,1500,5,32.7227,0.1011,0.0325,0.0,100.0,0.0,0.8239,0.0009,40.74,0.7533,14.1557,0.2734,887.8,15.1559

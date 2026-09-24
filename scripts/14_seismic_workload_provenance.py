@@ -3,16 +3,31 @@
 This script extracts workload statistics from the train/validation/test CSV
 files and writes compact tables used to justify that the experiments are tied
 to wireless seismic sensing rather than a generic IoT workload.
+
+Dependency statistics are reported for two scopes, because they differ:
+
+* ``concatenated_splits`` - the three released split files joined back
+  together.  The split is taken on the *raw* records, so dependency links that
+  cross a split boundary are dropped and the dependent-task share is
+  understated.
+* ``released_evaluation_trace`` - the 3000-task trace actually evaluated in the
+  paper (``prepare_task_dataframe`` applied to the full released task set).
+  This is the scope quoted in Table I of the paper.
 """
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pandas as pd
 
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+
+import dag_utils as du  # noqa: E402
+
 DATA = ROOT / "data"
 OUT = ROOT / "outputs"
 OUT.mkdir(exist_ok=True)
@@ -27,22 +42,32 @@ def main() -> None:
         ],
         ignore_index=True,
     )
+    trace = du.load_base_trace()
 
     summary_rows = [
-        {"metric": "number_of_tasks", "value": len(df)},
-        {"metric": "number_of_stations", "value": df["station_name"].nunique()},
-        {"metric": "sampling_rate_hz", "value": df["sampling_rate_Hz"].mode().iloc[0]},
-        {"metric": "data_size_mb_mean", "value": df["data_size_mb"].mean()},
-        {"metric": "data_size_mb_min", "value": df["data_size_mb"].min()},
-        {"metric": "data_size_mb_median", "value": df["data_size_mb"].median()},
-        {"metric": "data_size_mb_max", "value": df["data_size_mb"].max()},
-        {"metric": "compute_density_mean", "value": df["compute_density_FLOPs_per_byte"].mean()},
-        {"metric": "compute_density_median", "value": df["compute_density_FLOPs_per_byte"].median()},
-        {"metric": "deadline_ms_mean", "value": df["deadline_ms"].mean()},
-        {"metric": "deadline_ms_min", "value": df["deadline_ms"].min()},
-        {"metric": "deadline_ms_max", "value": df["deadline_ms"].max()},
-        {"metric": "dependency_task_count", "value": int((df["dependency_count"] >= 1).sum())},
-        {"metric": "dependency_task_percent", "value": (df["dependency_count"] >= 1).mean() * 100},
+        {"scope": "concatenated_splits", "metric": "number_of_tasks", "value": len(df)},
+        {"scope": "concatenated_splits", "metric": "number_of_stations", "value": df["station_name"].nunique()},
+        {"scope": "concatenated_splits", "metric": "sampling_rate_hz", "value": df["sampling_rate_Hz"].mode().iloc[0]},
+        {"scope": "concatenated_splits", "metric": "data_size_mb_mean", "value": df["data_size_mb"].mean()},
+        {"scope": "concatenated_splits", "metric": "data_size_mb_min", "value": df["data_size_mb"].min()},
+        {"scope": "concatenated_splits", "metric": "data_size_mb_median", "value": df["data_size_mb"].median()},
+        {"scope": "concatenated_splits", "metric": "data_size_mb_max", "value": df["data_size_mb"].max()},
+        {"scope": "concatenated_splits", "metric": "compute_density_mean", "value": df["compute_density_FLOPs_per_byte"].mean()},
+        {"scope": "concatenated_splits", "metric": "compute_density_median", "value": df["compute_density_FLOPs_per_byte"].median()},
+        {"scope": "concatenated_splits", "metric": "deadline_ms_mean", "value": df["deadline_ms"].mean()},
+        {"scope": "concatenated_splits", "metric": "deadline_ms_min", "value": df["deadline_ms"].min()},
+        {"scope": "concatenated_splits", "metric": "deadline_ms_max", "value": df["deadline_ms"].max()},
+        {"scope": "concatenated_splits", "metric": "dependency_task_count", "value": int((df["dependency_count"] >= 1).sum())},
+        {"scope": "concatenated_splits", "metric": "dependency_task_percent", "value": (df["dependency_count"] >= 1).mean() * 100},
+        {"scope": "released_evaluation_trace", "metric": "number_of_tasks", "value": len(trace)},
+        {"scope": "released_evaluation_trace", "metric": "number_of_stations", "value": trace["station_name"].nunique()},
+        {"scope": "released_evaluation_trace", "metric": "deadline_ms_mean", "value": trace["deadline_ms"].mean()},
+        {"scope": "released_evaluation_trace", "metric": "deadline_ms_min", "value": trace["deadline_ms"].min()},
+        {"scope": "released_evaluation_trace", "metric": "deadline_ms_max", "value": trace["deadline_ms"].max()},
+        {"scope": "released_evaluation_trace", "metric": "high_priority_task_count", "value": int(trace["high_priority"].sum())},
+        {"scope": "released_evaluation_trace", "metric": "high_priority_task_percent", "value": trace["high_priority"].mean() * 100},
+        {"scope": "released_evaluation_trace", "metric": "dependency_task_count", "value": int((trace["dependency_count"] >= 1).sum())},
+        {"scope": "released_evaluation_trace", "metric": "dependency_task_percent", "value": (trace["dependency_count"] >= 1).mean() * 100},
     ]
     pd.DataFrame(summary_rows).to_csv(OUT / "exp14_seismic_workload_summary.csv", index=False)
 

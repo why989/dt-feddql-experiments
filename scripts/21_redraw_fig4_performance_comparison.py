@@ -23,7 +23,7 @@ ORDER = [
 ]
 
 LABELS = {
-    "DT-FedDQL": "DT-FDQL",
+    "DT-FedDQL": "DT-Fed",
     "Greedy": "Greedy",
     "Fuzzy DQL": "Fuzzy",
     "FedServ": "FServ",
@@ -177,4 +177,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 

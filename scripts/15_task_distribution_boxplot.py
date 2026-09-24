@@ -60,7 +60,7 @@ def main() -> None:
         ("DT-FedDQL", "dt_feddql_result.csv"),
         ("Greedy", "greedy_results.csv"),
         ("MILP", "milp_results.csv"),
-        ("C-DQN", "dqn_results.csv"),
+        ("C-DQN", "centralized_dqn_results.csv"),
         ("Local", "local_only_results.csv"),
         ("Random", "random_offloading_result.csv"),
     ]

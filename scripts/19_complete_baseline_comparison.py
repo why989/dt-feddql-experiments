@@ -18,6 +18,7 @@ ORDER = [
     "FedServ",
     "MILP",
     "Centralized DQN",
+    "Round-Robin",
     "Local Only",
     "Random Offloading",
 ]
@@ -59,16 +60,29 @@ def main() -> None:
         [
             ["Local Only", "Deterministic baseline", "All tasks are executed on the source terminal."],
             ["Random Offloading", "Stochastic baseline", "Randomly selects one feasible execution layer."],
-            ["Greedy", "Self-implemented heuristic", "Uses latency urgency, workload size, and resource availability."],
+            ["Round-Robin", "Deterministic baseline", "Cycles tasks over the three edge nodes in arrival order; spreads load without any state observation, learning, or trust check."],
+            ["Greedy", "Self-implemented heuristic", "Myopic threshold rule on a latency-urgency index and a resource-footprint index; no queueing estimate and no trust check."],
             ["MILP-inspired", "Optimization-inspired baseline", "Uses deterministic assignment under the same objective components; no exact MILP optimality gap is claimed."],
-            ["Centralized DQN", "Self-implemented learning baseline", "Single DQN policy with centralized state observation."],
-            ["Fuzzy DQL", "Self-implemented fuzzy-guided DQL baseline", "Adds fuzzy-prior guidance but no federated aggregation or DT re-orchestration."],
-            ["FedServ", "Literature-inspired federated service baseline", "Federated service-offloading style policy under the same simulator."],
+            ["Centralized DQN", "Self-implemented learning baseline", "Single DQN policy trained on the full training workload with centralized state observation (live load of every execution location); no federated aggregation and no DT re-orchestration."],
+            ["Fuzzy DQL", "Self-implemented fuzzy-guided DQL baseline", "Uses the fuzzy winner action only; no federated aggregation and no DT re-orchestration."],
+            ["FedServ", "Literature-inspired federated service baseline", "Admits prioritized tasks to a reserved edge service class and fills the remaining edge capacity in arrival order; no learning and no DT check."],
             ["FedDQL-Federated", "Proposed-family ablation", "Federated DQL without DT trustworthy re-orchestration."],
             ["DT-FedDQL", "Proposed method", "Fuzzy prior + FedDQL + DT trustworthy orchestration."],
         ],
         columns=["Algorithm", "Implementation_type", "Description"],
     )
+    baseline_sources["Implementation"] = [
+        "inline lambda",
+        "inline lambda (seed 42)",
+        "inline round-robin cycle over EDGE_ACTION_IDS (build_release_results.py)",
+        "scripts/baseline_policies.py::GreedyPolicy",
+        "scripts/baseline_policies.py::milp_policy",
+        "train_centralized_dqn.py -> results/centralized_dqn_weights.pkl (scripts/baseline_policies.py::centralized_dqn_policy)",
+        "scripts/baseline_policies.py::make_fuzzy_dql_policy",
+        "scripts/baseline_policies.py::FedServPolicy",
+        "FedDQL with digital_twin_orchestration=False",
+        "FedDQL with digital_twin_orchestration=True",
+    ]
 
     comparison_path = OUT_DIR / "exp19_complete_baseline_comparison.csv"
     source_path = OUT_DIR / "exp19_baseline_implementation_sources.csv"

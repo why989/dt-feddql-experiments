@@ -1,0 +1,8 @@
+quantity,value
+global model argmax action counts,"{'terminal': 52, 'edge_1': 1855, 'edge_2': 1019, 'edge_3': 74, 'cloud': 0}"
+tasks routed by the learned network to edge_1,1855/3000
+DT-FedDQL latency (ms),30.4196
+all-strongest-edge latency (ms),37.2193
+round-robin-edge latency (ms),31.1109
+DT-FedDQL high-priority completion (%),100.0
+all-strongest-edge high-priority completion (%),89.313

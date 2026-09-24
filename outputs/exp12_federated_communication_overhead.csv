@@ -1,4 +1,4 @@
 scheme,transferred_object,bytes,traffic_mb,reduction_vs_raw_percent
 Centralized training,Raw training data,3605446553,3438.422,0.0
-Federated upload,Local DQN parameters,1290960,1.231,99.9642
-Federated upload/download,DQN parameters,2581920,2.462,99.9284
+Federated upload,Local DQN parameters,2644320,2.522,99.9267
+Federated upload/download,DQN parameters,5288640,5.044,99.8533

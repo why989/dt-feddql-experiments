@@ -26,7 +26,7 @@ FILES = {
     "FedDQL-Federated": "fed_dql_federated_result.csv",
     "Greedy": "greedy_results.csv",
     "MILP": "milp_results.csv",
-    "Centralized DQN": "dqn_results.csv",
+    "Centralized DQN": "centralized_dqn_results.csv",
     "Local Only": "local_only_results.csv",
     "Random Offloading": "random_offloading_result.csv",
 }

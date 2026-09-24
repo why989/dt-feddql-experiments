@@ -1,6 +1,6 @@
 execution_node,task_count,ratio_percent,avg_delay_ms,avg_energy_kj,avg_cpu_util_percent,avg_bandwidth_util_percent
 terminal-local,0,0.0,,,,
-edge-1,1091,36.37,21.044,0.03103,74.42,76.33
-edge-2,1036,34.53,20.8202,0.030837,74.44,76.32
-edge-3,873,29.1,20.9763,0.031077,74.43,76.32
+edge-1,1932,64.4,31.6265,0.03089,74.27,76.52
+edge-2,961,32.03,29.8902,0.036581,74.37,75.7
+edge-3,107,3.57,13.382,0.020472,77.99,78.39
 cloud,0,0.0,,,,

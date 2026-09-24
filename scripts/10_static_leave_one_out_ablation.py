@@ -12,7 +12,17 @@ from common import OUTPUT_DIR, markdown_table, print_header, save_markdown, save
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from algorithm_utils import ACTION_ID, calculate_metrics, load_task_set, prepare_task_dataframe, run_policy_on_tasks
+from algorithm_utils import (
+    ACTION_ID,
+    CLOUD_ACTION_ID,
+    EDGE_ACTION_IDS,
+    EDGE_NODE_BY_ACTION,
+    TERMINAL_ACTION_ID,
+    calculate_metrics,
+    load_task_set,
+    prepare_task_dataframe,
+    run_policy_on_tasks,
+)
 from digital_twin import estimate_action_trust
 from models.fuzzy_classifier import FuzzyTaskClassifier
 
@@ -24,10 +34,13 @@ def _energy_proxy(task: pd.Series, action: int) -> float:
     d = float(task.get("data_size_norm", 0.5))
     data_mb = float(task.get("data_size_mb", d * 100.0))
 
-    if action == ACTION_ID["terminal"]:
+    if action == TERMINAL_ACTION_ID:
         return 0.055 + 0.028 * c + 0.014 * d
-    if action == ACTION_ID["edge"]:
-        return 0.026 + 0.017 * c + 0.008 * d + (data_mb * 8.0 / 70.0) * 0.01
+    if int(action) in EDGE_ACTION_IDS:
+        # Heterogeneous edge tier: a weaker node spends more uplink energy per
+        # bit because it has less uplink bandwidth available.
+        uplink = float(np.mean(EDGE_NODE_BY_ACTION[int(action)]["uplink_mbps"]))
+        return 0.026 + 0.017 * c + 0.008 * d + (data_mb * 8.0 / uplink) * 0.01
     return 0.038 + 0.022 * c + 0.016 * d + (data_mb * 8.0 / 70.0) * 0.015
 
 
@@ -47,10 +60,15 @@ class StaticAblationPolicy:
 
     def __post_init__(self) -> None:
         self.fuzzy = FuzzyTaskClassifier()
+        # One (cpu, bandwidth) load hint per node-level action.  The three edge
+        # nodes are heterogeneous: the fastest node (edge_1) is also the one the
+        # static proxy would otherwise over-select, so its hint starts highest.
         self.load_hints = {
-            ACTION_ID["terminal"]: [0.56, 0.48],
-            ACTION_ID["edge"]: [0.78, 0.77],
-            ACTION_ID["cloud"]: [0.55, 0.70],
+            TERMINAL_ACTION_ID: [0.56, 0.48],
+            ACTION_ID["edge_1"]: [0.78, 0.77],
+            ACTION_ID["edge_2"]: [0.76, 0.72],
+            ACTION_ID["edge_3"]: [0.73, 0.66],
+            CLOUD_ACTION_ID: [0.55, 0.70],
         }
 
     def __call__(self, task: pd.Series) -> int:
@@ -119,7 +137,7 @@ class StaticAblationPolicy:
             availability = estimate["dt_predicted_availability"]
 
             if self.use_reward_shaping:
-                priority_term = 1.0 if (high_priority and action == ACTION_ID["edge"]) else 0.0
+                priority_term = 1.0 if (high_priority and action in EDGE_ACTION_IDS) else 0.0
                 violation_penalty = 1.0 if dtt < 0.80 else 0.0
                 score = (
                     -0.34 * delay_ratio
@@ -141,9 +159,9 @@ class StaticAblationPolicy:
                 d = float(task.get("data_size_norm", 0.0))
                 if action == ACTION_ID["terminal"] and c < 0.45 and d < 0.45:
                     score += 0.42
-                if action == ACTION_ID["cloud"] and c > 0.72 and d > 0.62:
+                if action == CLOUD_ACTION_ID and c > 0.72 and d > 0.62:
                     score += 0.30
-                if action == ACTION_ID["edge"]:
+                if action in EDGE_ACTION_IDS:
                     score -= 0.06
 
             if self.use_resource_state:
@@ -158,10 +176,14 @@ class StaticAblationPolicy:
     def _update_load_hint(self, action: int, task: pd.Series) -> None:
         c = float(task.get("compute_norm", 0.5))
         d = float(task.get("data_size_norm", 0.5))
-        if action == ACTION_ID["terminal"]:
+        if action == TERMINAL_ACTION_ID:
             observed = (0.54 + 0.08 * c, 0.47 + 0.05 * d)
-        elif action == ACTION_ID["edge"]:
-            observed = (0.74 + 0.12 * c, 0.73 + 0.12 * d)
+        elif int(action) in EDGE_ACTION_IDS:
+            # A weaker edge node sees a higher per-task load, which is what
+            # makes the resource-state module spread tasks across the tier.
+            spec = EDGE_NODE_BY_ACTION[int(action)]
+            weak = 1.0 - float(spec["freq_ghz"]) / 5.0
+            observed = (0.70 + 0.12 * c + 0.05 * weak, 0.69 + 0.12 * d + 0.06 * weak)
         else:
             observed = (0.46 + 0.10 * c, 0.62 + 0.20 * d)
 

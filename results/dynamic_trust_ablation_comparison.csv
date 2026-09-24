@@ -1,0 +1,11 @@
+algorithm,digital_twin_orchestration,epoch,phase_description,network_latency_ms,processing_time_ms,end_to_end_latency_ms,dtt_score,timeliness,reliability,availability,trust_violation_rate,high_priority_completion_rate,reorchestration_rate
+DT-FedDQL,1,R1,normal network and balanced edge load,13.855,20.7598,34.6149,0.8077,0.9453,0.8545,1.0,32.0238,96.0,93.4524
+DT-FedDQL,1,R2,network latency degradation,78.8715,23.3064,102.1779,0.2564,0.3601,0.7677,0.92,100.0,93.3333,94.4048
+DT-FedDQL,1,R3,digital-twin re-orchestration recovery,9.8461,17.8569,27.703,0.8805,0.9927,0.887,1.0,2.2619,85.5556,94.7619
+DT-FedDQL,1,R4,edge overload and resource contention,35.5285,40.0182,75.5467,0.2906,0.4889,0.7714,0.77,100.0,97.7778,95.7143
+DT-FedDQL,1,R5,stable state after orchestration,21.9758,22.2918,44.2676,0.7037,0.8104,0.8682,1.0,77.8802,89.2473,93.6636
+No-DT-FedDQL,0,R1,normal network and balanced edge load,13.855,40.8535,54.7085,0.5686,0.6632,0.8545,1.0,94.5238,98.3333,0.0
+No-DT-FedDQL,0,R2,network latency degradation,78.8715,44.7634,123.6349,0.2094,0.2941,0.7677,0.92,100.0,100.0,0.0
+No-DT-FedDQL,0,R3,without digital-twin recovery,53.1726,49.5724,102.745,0.2513,0.3577,0.7948,0.88,99.881,100.0,0.0
+No-DT-FedDQL,0,R4,edge overload and resource contention,35.5285,79.4463,114.9748,0.1805,0.319,0.7609,0.74,100.0,98.3333,0.0
+No-DT-FedDQL,0,R5,partial stabilization without orchestration,33.9516,51.5612,85.5128,0.3174,0.4287,0.8192,0.9,99.7696,100.0,0.0

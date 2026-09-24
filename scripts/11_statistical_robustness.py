@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import importlib.util
+import pickle
 import sys
 from pathlib import Path
 from typing import Callable
@@ -13,81 +13,77 @@ from common import OUTPUT_DIR, markdown_table, print_header, save_markdown, save
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from algorithm_utils import ACTION_ID, calculate_metrics, load_task_set, prepare_task_dataframe, reference_action_rule, run_policy_on_tasks, split_dataset
+from algorithm_utils import (
+    ACTION_ID,
+    calculate_metrics,
+    load_task_set,
+    prepare_task_dataframe,
+    run_policy_on_tasks,
+    split_dataset,
+)
+from baseline_policies import (
+    FedServPolicy,
+    GreedyPolicy,
+    centralized_dqn_policy,
+    make_fuzzy_dql_policy,
+    milp_policy,
+)
+from deployment_model import NUM_ACTIONS
+from models.federated_learning_numpy import (
+    FederatedServer,
+    LocalAgent,
+    fed_dql_policy_with_federated_learning,
+)
+
+# The DT-FedDQL / FedDQL-Federated rows must be evaluated with the *released*
+# federated global Q-network, not with a static proxy.  Otherwise the multi-seed
+# table would not correspond to the model that ``results/dt_feddql_result.csv``
+# is built from.
+_WEIGHTS_PATH = PROJECT_ROOT / "results" / "fed_dql_federated_model_weights.pkl"
+_SERVER_CACHE: dict[str, FederatedServer] = {}
 
 
-def _load_static_policy_class():
-    script_path = Path(__file__).resolve().with_name("10_static_leave_one_out_ablation.py")
-    spec = importlib.util.spec_from_file_location("static_leave_one_out_ablation", script_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load {script_path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module.StaticAblationPolicy
+def _released_server() -> FederatedServer:
+    """Load the released federated global weights (cached per process)."""
+
+    server = _SERVER_CACHE.get("server")
+    if server is None:
+        if not _WEIGHTS_PATH.exists():
+            raise SystemExit(
+                f"missing released weights: {_WEIGHTS_PATH}; run train_released_model.py first"
+            )
+        server = FederatedServer(15, NUM_ACTIONS)
+        server.add_local_agent(LocalAgent(15, NUM_ACTIONS, 0))
+        with open(_WEIGHTS_PATH, "rb") as handle:
+            weights = pickle.load(handle)
+        server.global_model.set_weights(weights)
+        _SERVER_CACHE["server"] = server
+    return server
 
 
-StaticAblationPolicy = _load_static_policy_class()
+def _make_policy(algorithm: str, seed: int) -> Callable:
+    if algorithm in {"DT-FedDQL", "FedDQL-Federated"}:
+        server = _released_server()
 
+        def learned(task, loads):
+            return fed_dql_policy_with_federated_learning(task, server, loads)
 
-def _milp_policy(task: pd.Series) -> int:
-    delay = float(task["delay_norm"])
-    compute = float(task["compute_norm"])
-    data = float(task["data_size_norm"])
-    priority = float(task["priority_score"])
-    if priority > 0.8:
-        return ACTION_ID["cloud"] if (delay > 0.6 or compute > 0.5) else ACTION_ID["edge"]
-    if compute > 0.7:
-        return ACTION_ID["edge"]
-    if data > 0.6:
-        return ACTION_ID["cloud"]
-    return ACTION_ID["terminal"]
-
-
-def _centralized_dqn_policy(task: pd.Series) -> int:
-    delay = float(task["delay_norm"])
-    compute = float(task["compute_norm"])
-    data = float(task["data_size_norm"])
-    priority = float(task["priority_score"])
-    memory = float(task.get("memory_norm", 0.0))
-    dependency_count = float(task.get("dependency_count", 0.0))
-    if priority > 0.7:
-        if delay > 0.5:
-            return ACTION_ID["cloud"]
-        if compute > 0.6 or memory > 0.5:
-            return ACTION_ID["edge"]
-        return ACTION_ID["terminal"]
-    if dependency_count > 1 or compute > 0.8:
-        return ACTION_ID["edge"]
-    if data > 0.7:
-        return ACTION_ID["cloud"]
-    return ACTION_ID["terminal"]
-
-
-def _make_random_policy(seed: int) -> Callable[[pd.Series], int]:
-    rng = np.random.default_rng(seed + 1009)
-    return lambda task: int(rng.choice([ACTION_ID["terminal"], ACTION_ID["edge"], ACTION_ID["cloud"]]))
-
-
-def _make_policy(algorithm: str, seed: int) -> Callable[[pd.Series], int]:
-    if algorithm == "DT-FedDQL":
-        return StaticAblationPolicy(True, True, True, True)
-    if algorithm == "FedDQL-Federated":
-        return StaticAblationPolicy(True, True, True, True)
+        return learned
     if algorithm == "Greedy":
-        return reference_action_rule
-    if algorithm == "Fuzzy DQL":
-        return reference_action_rule
+        return GreedyPolicy()
     if algorithm == "FedServ":
-        return reference_action_rule
+        return FedServPolicy()
+    if algorithm == "Fuzzy DQL":
+        return make_fuzzy_dql_policy()
     if algorithm == "MILP":
-        return _milp_policy
+        return milp_policy
     if algorithm == "Centralized DQN":
-        return _centralized_dqn_policy
+        return centralized_dqn_policy
     if algorithm == "Local Only":
         return lambda task: ACTION_ID["terminal"]
     if algorithm == "Random Offloading":
-        return _make_random_policy(seed)
+        rng = np.random.default_rng(seed + 1009)
+        return lambda task: int(rng.choice([0, 1, 2, 3, 4]))
     raise ValueError(f"Unknown algorithm: {algorithm}")
 
 
@@ -100,7 +96,7 @@ def _run_algorithm(tasks: pd.DataFrame, algorithm: str, seed: int, bandwidth_sim
         seed=seed,
         dependency_aware=True,
         bandwidth_simulator=bandwidth_simulator,
-        priority_qos=algorithm in {"DT-FedDQL", "FedDQL-Federated"},
+        priority_qos=algorithm in {"DT-FedDQL", "FedDQL-Federated", "Centralized DQN"},
         digital_twin_orchestration=algorithm == "DT-FedDQL",
         trust_threshold=0.80,
     )

@@ -1,0 +1,7 @@
+client_id,task_count,share_denoising_percent,share_signal_enhancement_percent,mean_data_size_mb,high_priority_share_percent,setting
+0,700,51.71,48.29,1.6521,4.571,IID
+1,700,48.43,51.57,1.6047,4.143,IID
+2,700,51.0,49.0,1.6553,3.571,IID
+0,700,100.0,,1.2825,4.571,Non-IID
+1,700,51.14,48.86,1.6828,4.143,Non-IID
+2,700,,100.0,1.9468,3.571,Non-IID

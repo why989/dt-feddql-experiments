@@ -1,0 +1,8 @@
+﻿algorithm,hpc_success_count,high_priority_count,pooled_hpc_percent,wilson95_low_percent,wilson95_high_percent,per_seed_min_percent,per_seed_max_percent
+DT-FedDQL,655,655,100.0,99.4169,100.0,100.0,100.0
+FedDQL-Federated,653,655,99.6947,98.8936,99.9162,99.2366,100.0
+Greedy,138,655,21.0687,18.1189,24.3558,19.084,23.6641
+MILP,328,655,50.0763,46.258,53.8938,47.3282,55.7252
+Centralized DQN,654,655,99.8473,99.1403,99.973,99.2366,100.0
+Random Offloading,97,655,14.8092,12.2944,17.7343,11.4504,17.5573
+Local Only,0,655,0.0,0.0,0.5831,0.0,0.0

@@ -29,23 +29,25 @@ def main() -> None:
     task = pd.read_csv(RESULTS / "dt_feddql_result.csv")
     gamma = float(task["trust_threshold"].iloc[0]) if "trust_threshold" in task else 0.8
 
-    # Action distribution and completion metrics.
-    action_pct = (
-        task["action"]
-        .str.lower()
-        .value_counts(normalize=True)
-        .mul(100)
-        .reindex(["local", "terminal", "edge", "cloud"], fill_value=0.0)
-    )
+    # Action distribution and completion metrics.  The released action space is
+    # node-level, A = {L, e1, e2, e3, C}, so the histogram is taken over the
+    # three edge nodes individually and merged only for the edge-tier row.
+    action_pct = task["action"].astype(str).str.lower().value_counts(normalize=True).mul(100)
     # Merge local/terminal naming for paper reporting.
     terminal_pct = float(action_pct.get("local", 0.0) + action_pct.get("terminal", 0.0))
-    edge_pct = float(action_pct.get("edge", 0.0))
+    edge_1_pct = float(action_pct.get("edge_1", 0.0))
+    edge_2_pct = float(action_pct.get("edge_2", 0.0))
+    edge_3_pct = float(action_pct.get("edge_3", 0.0))
+    edge_pct = edge_1_pct + edge_2_pct + edge_3_pct
     cloud_pct = float(action_pct.get("cloud", 0.0))
 
     core_metrics = pd.DataFrame(
         [
             {"metric": "terminal_action_percent", "value": terminal_pct},
             {"metric": "edge_action_percent", "value": edge_pct},
+            {"metric": "edge_1_action_percent", "value": edge_1_pct},
+            {"metric": "edge_2_action_percent", "value": edge_2_pct},
+            {"metric": "edge_3_action_percent", "value": edge_3_pct},
             {"metric": "cloud_action_percent", "value": cloud_pct},
             {"metric": "overall_deadline_completion_percent", "value": float(task["deadline_met"].mean() * 100)},
             {"metric": "deadline_violation_percent", "value": float((1 - task["deadline_met"].mean()) * 100)},
@@ -122,9 +124,8 @@ def main() -> None:
     training = pd.read_csv(RESULTS / "training_logs.csv")
     fed = pd.DataFrame(
         [
-            {"metric": "federated_rounds", "value": 20},
+            {"metric": "federated_rounds", "value": 40},
             {"metric": "local_epochs_per_round", "value": 2},
-            {"metric": "validation_interval_rounds", "value": 5},
             {"metric": "convergence_epoch_recorded", "value": int(training["epoch"].max())},
             {
                 "metric": "parameter_upload_download_mb",

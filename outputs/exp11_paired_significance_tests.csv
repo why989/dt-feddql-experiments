@@ -1,25 +1,25 @@
 ﻿comparison,metric,target_mean,baseline_mean,paired_t_p_value,wilcoxon_p_value,n_pairs
-DT-FedDQL vs FedDQL-Federated,avg_delay_ms,21.01252,21.01186,0.041411,0.0656,5
-DT-FedDQL vs FedDQL-Federated,avg_energy_kj,0.030996,0.030996,0.177808,0.157299,5
-DT-FedDQL vs FedDQL-Federated,trust_violation_rate,14.78666,14.82002,0.034079,0.0656,5
-DT-FedDQL vs FedDQL-Federated,high_priority_completion_rate,100.0,99.23662,0.034105,0.058782,5
-DT-FedDQL vs Greedy,avg_delay_ms,21.01252,43.31516,0.0,0.0625,5
-DT-FedDQL vs Greedy,avg_energy_kj,0.030996,0.057763,0.0,0.0625,5
-DT-FedDQL vs Greedy,trust_violation_rate,14.78666,94.53332,0.0,0.0625,5
-DT-FedDQL vs Greedy,high_priority_completion_rate,100.0,84.2748,0.000422,0.0625,5
-DT-FedDQL vs MILP,avg_delay_ms,21.01252,44.85538,0.0,0.0625,5
-DT-FedDQL vs MILP,avg_energy_kj,0.030996,0.058009,0.0,0.0625,5
-DT-FedDQL vs MILP,trust_violation_rate,14.78666,95.63332,0.0,0.0625,5
-DT-FedDQL vs MILP,high_priority_completion_rate,100.0,83.8168,0.000297,0.0625,5
-DT-FedDQL vs Centralized DQN,avg_delay_ms,21.01252,45.26806,0.0,0.0625,5
-DT-FedDQL vs Centralized DQN,avg_energy_kj,0.030996,0.059265,0.0,0.0625,5
-DT-FedDQL vs Centralized DQN,trust_violation_rate,14.78666,99.38666,0.0,0.0625,5
-DT-FedDQL vs Centralized DQN,high_priority_completion_rate,100.0,0.45804,0.0,0.0625,5
-DT-FedDQL vs Random Offloading,avg_delay_ms,21.01252,59.53316,0.0,0.0625,5
-DT-FedDQL vs Random Offloading,avg_energy_kj,0.030996,0.046254,0.0,0.0625,5
-DT-FedDQL vs Random Offloading,trust_violation_rate,14.78666,71.36,0.0,0.0625,5
-DT-FedDQL vs Random Offloading,high_priority_completion_rate,100.0,28.24428,1e-06,0.0625,5
-DT-FedDQL vs Local Only,avg_delay_ms,21.01252,44.70326,0.0,0.0625,5
-DT-FedDQL vs Local Only,avg_energy_kj,0.030996,0.059354,0.0,0.0625,5
-DT-FedDQL vs Local Only,trust_violation_rate,14.78666,99.44666,0.0,0.0625,5
+DT-FedDQL vs FedDQL-Federated,avg_delay_ms,30.43998,30.88618,0.00049,0.0625,5
+DT-FedDQL vs FedDQL-Federated,avg_energy_kj,0.032327,0.03286,5e-06,0.0625,5
+DT-FedDQL vs FedDQL-Federated,trust_violation_rate,24.08664,23.33332,0.133648,0.1875,5
+DT-FedDQL vs FedDQL-Federated,high_priority_completion_rate,100.0,99.69464,0.177808,0.157299,5
+DT-FedDQL vs Greedy,avg_delay_ms,30.43998,49.738,0.0,0.0625,5
+DT-FedDQL vs Greedy,avg_energy_kj,0.032327,0.048202,0.0,0.0625,5
+DT-FedDQL vs Greedy,trust_violation_rate,24.08664,79.64,0.0,0.0625,5
+DT-FedDQL vs Greedy,high_priority_completion_rate,100.0,21.06872,0.0,0.0625,5
+DT-FedDQL vs MILP,avg_delay_ms,30.43998,58.22558,0.0,0.0625,5
+DT-FedDQL vs MILP,avg_energy_kj,0.032327,0.057951,0.0,0.0625,5
+DT-FedDQL vs MILP,trust_violation_rate,24.08664,97.78,0.0,0.0625,5
+DT-FedDQL vs MILP,high_priority_completion_rate,100.0,50.07634,5e-06,0.0625,5
+DT-FedDQL vs Centralized DQN,avg_delay_ms,30.43998,30.81498,0.000166,0.0625,5
+DT-FedDQL vs Centralized DQN,avg_energy_kj,0.032327,0.032535,6.5e-05,0.0625,5
+DT-FedDQL vs Centralized DQN,trust_violation_rate,24.08664,23.8,0.428717,0.715001,5
+DT-FedDQL vs Centralized DQN,high_priority_completion_rate,100.0,99.84732,0.373901,0.317311,5
+DT-FedDQL vs Random Offloading,avg_delay_ms,30.43998,52.73034,0.0,0.0625,5
+DT-FedDQL vs Random Offloading,avg_energy_kj,0.032327,0.04549,0.0,0.0625,5
+DT-FedDQL vs Random Offloading,trust_violation_rate,24.08664,65.59334,1e-06,0.0625,5
+DT-FedDQL vs Random Offloading,high_priority_completion_rate,100.0,14.80916,0.0,0.0625,5
+DT-FedDQL vs Local Only,avg_delay_ms,30.43998,58.93458,0.0,0.0625,5
+DT-FedDQL vs Local Only,avg_energy_kj,0.032327,0.059354,0.0,0.0625,5
+DT-FedDQL vs Local Only,trust_violation_rate,24.08664,99.99334,0.0,0.0625,5
 DT-FedDQL vs Local Only,high_priority_completion_rate,100.0,0.0,0.0,0.0625,5

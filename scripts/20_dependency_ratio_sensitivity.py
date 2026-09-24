@@ -1,76 +1,101 @@
+"""Dependency-ratio sensitivity of the DT-FedDQL policy.
+
+The released seismic workload contains dependent tasks only in single-predecessor
+chains.  To test whether the dependency-aware design stays stable when a larger
+share of the workload is chained, this script **rebuilds** the dependency graph
+of the released trace at several dependent-task ratios and **re-runs** the
+released DT-FedDQL policy on the re-wired tasks.
+
+Nothing here is extrapolated from the released metrics: every reported value is
+produced by the simulator on a re-wired task set, and the branch width is held
+at one predecessor per dependent task so that only the *ratio* changes.
+"""
+
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-
 ROOT = Path(__file__).resolve().parents[1]
-RESULT_PATH = ROOT / "results" / "dt_feddql_result.csv"
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+
+import dag_utils as du  # noqa: E402
+
 OUT_DIR = ROOT / "outputs"
 
+RATIOS = (0.02, 0.10, 0.30, 0.50)
+WIDTH = 1
+SEEDS = (42, 43, 44, 45, 46)
 
-def run_dependency_ratio_scan(df: pd.DataFrame) -> pd.DataFrame:
-    """Stress-test the dependency-aware policy under denser DAG relations.
 
-    The real seismic workload contains a small fraction of dependent tasks.
-    To check whether the DAG-aware modeling remains stable when more tasks are
-    chained, this script increases the dependent-task ratio while preserving
-    the original delay, energy, priority, and trust traces. A deterministic
-    dependency waiting term is added to the selected tasks to emulate additional
-    predecessor-release latency.
-    """
+def _run_once(tasks: pd.DataFrame, model, seed: int) -> dict:
+    records, metrics = du.evaluate_policy(tasks, model, seed=seed)
+    high = records[records["high_priority"] == 1]
+    return {
+        "avg_latency_ms": metrics["avg_delay_ms"],
+        "avg_energy_kj": metrics["avg_energy_kj"],
+        "high_priority_completion_percent": metrics["high_priority_completion_rate"],
+        "avg_dtt_score": metrics["avg_dtt_score"],
+        "trust_violation_percent": metrics["trust_violation_rate"],
+        "high_priority_latency_ms": round(float(high["exec_delay_ms"].mean()), 4) if len(high) else np.nan,
+        "tasks_with_unmet_predecessor": int((records["dependency_met"] == 0).sum()),
+    }
 
-    rng = np.random.default_rng(42)
-    rows = []
-    base_delay = df["exec_delay_ms"].to_numpy(float)
-    base_energy = df["exec_energy_kj"].to_numpy(float)
-    deadline = df["deadline_ms"].to_numpy(float)
-    data_size = df["data_in_mb"].to_numpy(float)
-    base_dtt = df["dtt_score"].to_numpy(float)
-    base_violation = df["trust_violation"].to_numpy(bool)
-    high_priority = df["high_priority"].to_numpy(bool)
 
-    for ratio in [0.02, 0.10, 0.30, 0.50]:
-        n_tasks = len(df)
-        n_dependent = int(round(n_tasks * ratio))
-        selected = rng.choice(n_tasks, n_dependent, replace=False)
+def _summarise(tasks: pd.DataFrame, model, ratio_label: dict) -> dict:
+    stats = du.graph_statistics(tasks)
+    frame = pd.DataFrame([_run_once(tasks, model, seed) for seed in SEEDS])
+    row = {
+        **ratio_label,
+        "dependent_task_ratio_percent": stats["dependent_task_ratio_percent"],
+        "dependent_task_count": stats["dependent_task_count"],
+        "seeds": len(SEEDS),
+    }
+    for column in frame.columns:
+        row[column] = round(float(frame[column].mean()), 4)
+        row[f"{column}_std"] = round(float(frame[column].std(ddof=1)), 4)
+    return row
 
-        wait = np.zeros(n_tasks)
-        wait[selected] = 2.0 + 0.06 * deadline[selected] + 0.35 * data_size[selected] + 2.0 * ratio
 
-        delay = base_delay + wait
-        energy = base_energy + 0.0002 * (wait > 0)
-        dtt = np.clip(base_dtt - 0.003 * wait, 0.0, 1.0)
-        extra_violation = (delay > deadline) | (dtt < 0.80)
-        violation = base_violation | extra_violation
-
-        rows.append(
-            {
-                "dependent_task_ratio_percent": round(100.0 * ratio, 1),
-                "dependent_task_count": n_dependent,
-                "avg_latency_ms": round(float(delay.mean()), 2),
-                "avg_energy_kj": round(float(energy.mean()), 4),
-                "high_priority_completion_percent": round(float((~violation[high_priority]).mean() * 100.0), 2),
-                "avg_dtt_score": round(float(dtt.mean()), 3),
-                "trust_violation_percent": round(float(violation.mean() * 100.0), 2),
-            }
+def run_dependency_ratio_scan(model, base_trace: pd.DataFrame) -> pd.DataFrame:
+    rows = [
+        _summarise(
+            base_trace,
+            model,
+            {"scan_type": "released_graph", "target_ratio_percent": np.nan},
         )
-
+    ]
+    for ratio in RATIOS:
+        rewired = du.rewire_dependencies(base_trace, ratio, WIDTH)
+        rows.append(
+            _summarise(
+                rewired,
+                model,
+                {
+                    "scan_type": "dependency_ratio",
+                    "target_ratio_percent": round(100.0 * ratio, 1),
+                },
+            )
+        )
     return pd.DataFrame(rows)
 
 
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    df = pd.read_csv(RESULT_PATH)
-    out = run_dependency_ratio_scan(df)
+    model = du.load_trained_model()
+    base_trace = du.load_base_trace()
+
+    out = run_dependency_ratio_scan(model, base_trace)
     out_path = OUT_DIR / "exp20_dependency_ratio_sensitivity.csv"
     out.to_csv(out_path, index=False)
+
     print(out.to_string(index=False))
     print(f"Saved: {out_path}")
 
 
 if __name__ == "__main__":
     main()
-
